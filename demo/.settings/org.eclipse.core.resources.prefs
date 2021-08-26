@@ -1,0 +1,10 @@
+eclipse.preferences.version=1
+encoding//src/main/java/Client/ClientHandler.java=UTF-8
+encoding//src/main/java/Client/RequestDataEncoder.java=UTF-8
+encoding//src/main/java/Client/ResponseDataDecoder.java=UTF-8
+encoding//src/main/java/EncodeDecode/Decryption.java=UTF-8
+encoding//src/main/java/EncodeDecode/Encrpytion.java=UTF-8
+encoding//src/main/java/EncodeDecode/SecurityKeyPairGenerator.java=UTF-8
+encoding//src/main/java/Server/ProcessingHandler.java=UTF-8
+encoding//src/main/java/Server/RequestDecoder.java=UTF-8
+encoding//src/main/java/Server/ResponseDataEncoder.java=UTF-8
