@@ -1,14 +1,5 @@
 package Client;
 
-import java.io.FileInputStream;
-import java.security.KeyFactory;
-import java.security.PublicKey;
-import java.security.spec.X509EncodedKeySpec;
-import java.util.Base64;
-import java.util.Scanner;
-
-import javax.crypto.Cipher;
-
 import TLV.Msg;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;

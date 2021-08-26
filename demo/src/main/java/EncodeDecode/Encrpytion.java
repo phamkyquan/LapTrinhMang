@@ -27,6 +27,8 @@ public class Encrpytion {
 			// Mã hoá dữ liệu
 			Cipher c = Cipher.getInstance("RSA");
 			c.init(Cipher.ENCRYPT_MODE, pubKey);
+			int a = 100;
+			String bdsaf = a+"";
 			String msg = "helloworld";
 			byte encryptOut[] = c.doFinal(msg.getBytes());
 			String strEncrypt = Base64.getEncoder().encodeToString(encryptOut);
