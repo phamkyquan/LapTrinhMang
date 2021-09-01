@@ -7,23 +7,28 @@ import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.PrivateKey;
 import java.security.PublicKey;
-import java.security.SecureRandom;
 
 public class SecurityKeyPairGenerator {
 
 	public static void main(String[] args) {
 		try {
-			SecureRandom sr = new SecureRandom();
 			// Thuật toán phát sinh khóa - RSA
-			// Độ dài khóa 1024(bits), độ dài khóa này quyết định đến độ an toàn của khóa, càng lớn thì càng an toàn
-            // Demo chỉ sử dụng 1024 bit. Nhưng theo khuyến cáo thì độ dài khóa nên tối thiểu là 2048
+			// Độ dài khóa 1024(bits), độ dài khóa này quyết định đến độ an toàn của khóa,
+			// càng lớn thì càng an toàn
+			// Demo chỉ sử dụng 1024 bit. Nhưng theo khuyến cáo thì độ dài khóa nên tối
+			// thiểu là 2048
 			KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
-			kpg.initialize(2048, sr);
+			kpg.initialize(1024);
+
+			KeyPairGenerator kpgK = KeyPairGenerator.getInstance("RSA");
+			kpgK.initialize(2048);
 
 			// Khởi tạo cặp khóa
 			KeyPair kp = kpg.genKeyPair();
+
+			KeyPair kpK = kpgK.genKeyPair();
 			// PublicKey
-			PublicKey publicKey = kp.getPublic();
+			PublicKey publicKey = kpK.getPublic();
 			// PrivateKey
 			PrivateKey privateKey = kp.getPrivate();
 

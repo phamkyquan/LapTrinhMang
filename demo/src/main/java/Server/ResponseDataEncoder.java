@@ -1,18 +1,15 @@
 package Server;
 
-import java.io.FileInputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.nio.charset.StandardCharsets;
 import java.security.KeyFactory;
 import java.security.PublicKey;
 import java.security.spec.X509EncodedKeySpec;
-import java.util.Base64;
 
 import javax.crypto.Cipher;
 
 import TLV.Msg;
-import TLV.MsgStuct;
+import TLV.MsgStruct;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToByteEncoder;
@@ -21,36 +18,53 @@ public class ResponseDataEncoder extends MessageToByteEncoder<Msg> {
 
 	@Override
 	protected void encode(ChannelHandlerContext ctx, Msg msg, ByteBuf out) throws Exception {
-		byte[] msgB = encode(msg.getMsg()).getBytes();
-		int len = msgB.length;
+		byte[] type = msg.getType().getBytes();
+		byte[] msgB = msg.getMsg();
+		byte[] key = msg.getKey();
 
-		byte[] SendMsg = new byte[MsgStuct.B_TYPE_LENGTH + MsgStuct.B_LENGTH_LENGTH + len]; // int(type) + int(len) + msg.len
+		int lenM = msgB.length;
+		int lenK = key.length;
+
+		byte[] SendMsg = new byte[MsgStruct.B_TYPE_LENGTH + MsgStruct.B_KEY_LENGTH + lenK + MsgStruct.B_MSG_LENGTH
+				+ lenM];
 		int i = 0;
 
-		byte[] byType = new byte[MsgStuct.B_TYPE_LENGTH];
-		ByteBuffer bbType = ByteBuffer.wrap(byType);
-		bbType.order(ByteOrder.LITTLE_ENDIAN); // Use little-endian order here
-		
 		// Write type
-		bbType.asIntBuffer().put(msg.getType());
-		for (i = 0; i < byType.length; i++) {
-			SendMsg[i] = byType[i];
+		for (i = 0; i < MsgStruct.B_TYPE_LENGTH; i++) {
+			SendMsg[i] = type[i];
 		}
 
-		byte[] byLength = new byte[MsgStuct.B_LENGTH_LENGTH];
+		byte[] by = new byte[MsgStruct.B_KEY_LENGTH];
+		ByteBuffer bb = ByteBuffer.wrap(by);
+		bb.order(ByteOrder.LITTLE_ENDIAN); // Use little-endian order here
+
+		// write length key
+		bb.asIntBuffer().put(lenK);//
+		int h = i;
+		for (int k = 0; k < by.length; h++, k++) {
+			SendMsg[h] = by[k];
+		}
+
+		// write key
+		int m = h;
+		for (int k = 0; k < lenK; k++, m++) {
+			SendMsg[m] = key[k];
+		}
+
+		byte[] byLength = new byte[MsgStruct.B_MSG_LENGTH];
 		ByteBuffer bbLength = ByteBuffer.wrap(byLength);
 		bbLength.order(ByteOrder.LITTLE_ENDIAN); // Use little-endian order here
 
-		// write length
-		bbLength.asIntBuffer().put(len);//
-		int j = i;
+		// write length msg
+		bbLength.asIntBuffer().put(lenM);//
+		int j = m;
 		for (int k = 0; k < byLength.length; j++, k++) {
 			SendMsg[j] = byLength[k];
 		}
 
 		// write message
 		int n = j;
-		for (int k = 0; k < len; k++, n++) {
+		for (int k = 0; k < lenM; k++, n++) {
 			SendMsg[n] = msgB[k];
 		}
 		try {
@@ -60,23 +74,17 @@ public class ResponseDataEncoder extends MessageToByteEncoder<Msg> {
 			e.printStackTrace();
 		}
 	}
-	
-	private String encode(String str) throws Exception {
-		// Đọc file chứa public key
-		FileInputStream fis = new FileInputStream("D:\\publicKey.rsa");
-		byte[] b = new byte[fis.available()];
-		fis.read(b);
-		fis.close();
 
+	private byte[] encode(byte[] str) throws Exception {
 		// Tạo public key
-		X509EncodedKeySpec spec = new X509EncodedKeySpec(b);
+		X509EncodedKeySpec spec = new X509EncodedKeySpec(KeyServer.publicKeyC);
 		KeyFactory factory = KeyFactory.getInstance("RSA");
 		PublicKey pubKey = factory.generatePublic(spec);
 
 		// Mã hoá dữ liệu
 		Cipher c = Cipher.getInstance("RSA");
 		c.init(Cipher.ENCRYPT_MODE, pubKey);
-		byte encryptOut[] = c.doFinal(str.getBytes());
-		return Base64.getEncoder().encodeToString(encryptOut);
+		return c.doFinal(str);
 	}
+
 }

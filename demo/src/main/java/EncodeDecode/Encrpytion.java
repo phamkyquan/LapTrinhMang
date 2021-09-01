@@ -4,10 +4,9 @@ import java.io.FileInputStream;
 import java.security.KeyFactory;
 import java.security.PublicKey;
 import java.security.spec.X509EncodedKeySpec;
+import java.util.Base64;
 
 import javax.crypto.Cipher;
-
-import java.util.Base64;
 
 public class Encrpytion {
 
@@ -27,10 +26,7 @@ public class Encrpytion {
 			// Mã hoá dữ liệu
 			Cipher c = Cipher.getInstance("RSA");
 			c.init(Cipher.ENCRYPT_MODE, pubKey);
-			int a = 100;
-			String bdsaf = a+"";
-			String msg = "helloworld";
-			byte encryptOut[] = c.doFinal(msg.getBytes());
+			byte encryptOut[] = c.doFinal("+7ZlfReRyaBJ2MIj1mEjhg==".getBytes());
 			String strEncrypt = Base64.getEncoder().encodeToString(encryptOut);
 			System.out.println("Chuỗi sau khi mã hoá: " + strEncrypt);
 

@@ -1,6 +1,5 @@
 package Client;
 
-import java.io.FileInputStream;
 import java.security.KeyFactory;
 import java.security.PrivateKey;
 import java.security.spec.PKCS8EncodedKeySpec;
@@ -10,7 +9,7 @@ import java.util.List;
 import javax.crypto.Cipher;
 
 import TLV.Msg;
-import TLV.MsgStuct;
+import TLV.MsgStruct;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ReplayingDecoder;
@@ -22,11 +21,11 @@ public class ResponseDataDecoder extends ReplayingDecoder<ResponseDataDecoder.De
 	public ResponseDataDecoder() {
 		this.reset();
 	}
-	
+
 	@Override
-    public void channelActive(ChannelHandlerContext ctx) throws Exception {
-        super.channelActive(ctx);
-    }
+	public void channelActive(ChannelHandlerContext ctx) throws Exception {
+		super.channelActive(ctx);
+	}
 
 	@Override
 	protected void decode(ChannelHandlerContext ctx, ByteBuf buffer, List<Object> out) throws Exception {
@@ -34,33 +33,62 @@ public class ResponseDataDecoder extends ReplayingDecoder<ResponseDataDecoder.De
 
 		case TYPE:
 			buffer.markReaderIndex();
-			if (buffer.readableBytes() < MsgStuct.B_TYPE_LENGTH) {
+			if (buffer.readableBytes() < MsgStruct.B_TYPE_LENGTH) {
 				buffer.resetReaderIndex();
 				return;
 			}
 
-			byte[] type = new byte[MsgStuct.B_TYPE_LENGTH];
+			byte[] type = new byte[MsgStruct.B_TYPE_LENGTH];
 			buffer.readBytes(type, 0, type.length);
-			this.msg.setType(LITTLEENDIAN(type));
-			checkpoint(DecodingState.LENGTH);
+			this.msg.setType(new String(type));
+			checkpoint(DecodingState.LENGTH_KEY);
 			break;
 
-		case LENGTH:
+		case LENGTH_KEY:
 
 			buffer.markReaderIndex();
-			if (buffer.readableBytes() < MsgStuct.B_LENGTH_LENGTH) {
+			if (buffer.readableBytes() < MsgStruct.B_KEY_LENGTH) {
 				buffer.resetReaderIndex();
 				return;
 			}
 
-			byte[] length = new byte[MsgStuct.B_LENGTH_LENGTH];
-			buffer.readBytes(length, 0, length.length);
-			this.msg.setLen(LITTLEENDIAN(length));
+			byte[] lengthKey = new byte[MsgStruct.B_KEY_LENGTH];
+			buffer.readBytes(lengthKey, 0, lengthKey.length);
+			this.msg.setLenKey(LITTLEENDIAN(lengthKey));
+			checkpoint(DecodingState.KEY);
+			break;
+
+		case KEY:
+			int lengKey = this.msg.getLenKey();
+			if (lengKey > 0) {
+				buffer.markReaderIndex();
+				if (buffer.readableBytes() < lengKey) {
+					buffer.resetReaderIndex();
+					return;
+				}
+			}
+			byte[] key = new byte[lengKey];
+			buffer.readBytes(key, 0, lengKey);
+			this.msg.setKey(key);
+			checkpoint(DecodingState.LENGTH_MSG);
+			break;
+
+		case LENGTH_MSG:
+
+			buffer.markReaderIndex();
+			if (buffer.readableBytes() < MsgStruct.B_MSG_LENGTH) {
+				buffer.resetReaderIndex();
+				return;
+			}
+
+			byte[] lengthMsg = new byte[MsgStruct.B_MSG_LENGTH];
+			buffer.readBytes(lengthMsg, 0, lengthMsg.length);
+			this.msg.setLenMsg(LITTLEENDIAN(lengthMsg));
 			checkpoint(DecodingState.MSG);
 			break;
 
 		case MSG:
-			int lengMsg = this.msg.getLen();
+			int lengMsg = this.msg.getLenMsg();
 			if (lengMsg > 0) {
 				buffer.markReaderIndex();
 				if (buffer.readableBytes() < lengMsg) {
@@ -70,7 +98,7 @@ public class ResponseDataDecoder extends ReplayingDecoder<ResponseDataDecoder.De
 			}
 			byte[] msgM = new byte[lengMsg];
 			buffer.readBytes(msgM, 0, lengMsg);
-			this.msg.setMsg(decode(new String(msgM)));
+			this.msg.setMsg(msgM);
 			out.add(this.msg);
 			reset();
 			break;
@@ -79,25 +107,18 @@ public class ResponseDataDecoder extends ReplayingDecoder<ResponseDataDecoder.De
 			throw new Exception("Unknown decoding state: " + state());
 		}
 	}
-	
-	private String decode(String str) throws Exception {
-		// Đọc file chứa private key
-		FileInputStream fis = new FileInputStream("D:\\privateKey.rsa");
-		byte[] b = new byte[fis.available()];
-		fis.read(b);
-		fis.close();
 
+	private byte[] decode(byte[] str) throws Exception {
 		// Tạo private key
-		PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(b);
+		PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(KeyClient.privateKeyC.getEncoded());
 		KeyFactory factory = KeyFactory.getInstance("RSA");
 		PrivateKey priKey = factory.generatePrivate(spec);
 
 		// Giải mã dữ liệu
 		Cipher c = Cipher.getInstance("RSA");
 		c.init(Cipher.DECRYPT_MODE, priKey);
-		byte decryptOut[] = c.doFinal(Base64.getDecoder().decode(str));
-		return new String(decryptOut);
-}
+		return c.doFinal(Base64.getDecoder().decode(str));
+	}
 
 	public static int LITTLEENDIAN(byte[] b) {
 		int t = 0;
@@ -117,9 +138,9 @@ public class ResponseDataDecoder extends ReplayingDecoder<ResponseDataDecoder.De
 	}
 
 	public enum DecodingState {
-		TYPE, LENGTH, MSG
+		TYPE, LENGTH_KEY, KEY, LENGTH_MSG, MSG
 	}
-	
+
 	public static int BIGENDIAN(byte[] b) {
 		int t = 0;
 
