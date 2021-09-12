@@ -1,0 +1,68 @@
+<!DOCTYPE HTML>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+<title>Clients</title>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<style>
+tr, th, td {
+	padding: 5px;
+}
+
+button {
+	margin: 3px;
+}
+
+table {
+	margin-top: 2px;
+}
+</style>
+
+</head>
+
+<body>
+	<center>
+		<h1>CLIENTS ONLINE</h1>
+		<form th:object="${address}" th:action="@{submit}">
+			<table>
+				<tr>
+					<td>Address:</td>
+					<td><input type="text" th:field="*{url}" /></td>
+					<td><button type="submit">Submit</button></td>
+				</tr>
+			</table>
+			<h3 th:if="${success}">
+				<span th:text="${success}"></span>
+			</h3>
+			<button type="submit">
+				<a th:href="@{/attackAll}" style="text-decoration: none">Attack all</a>
+			</button>
+			<button>
+				<a th:href="@{/sleepAll}" style="text-decoration: none">Sleep all</a>
+			</button>
+			<table border="2" cellspacing="0">
+				<tr>
+					<th>Id</th>
+					<th>Ip</th>
+					<th>Status</th>
+					<th>Actions</th>
+				</tr>
+				<tr th:each="channel : ${channels}">
+					<td th:utext="${channel.id}">...</td>
+					<td th:utext="${channel.ip}">...</td>
+					<td th:utext="${channel.status}">...</td>
+					<td>
+						<button type="submit">
+							<a th:href="@{/attackById?id={id}(id=${channel.id})}"
+								style="text-decoration: none">Attack</a>
+						</button> <br />
+						<button>
+							<a th:href="@{/sleepById?id={id}(id=${channel.id})}"
+								style="text-decoration: none">Sleep</a>
+						</button>
+					</td>
+				</tr>
+			</table>
+		</form>
+	</center>
+</body>
+</html>
